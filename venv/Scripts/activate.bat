@@ -8,7 +8,7 @@ if defined _OLD_CODEPAGE (
     "%SystemRoot%\System32\chcp.com" 65001 > nul
 )
 
-set "VIRTUAL_ENV=C:\Users\Shovon Gorain\Desktop\phishing-detection-system\venv"
+set "VIRTUAL_ENV=C:\Users\Shovon Gorain\Documents\GitHub\Phishing-Detection\venv"
 
 if not defined PROMPT set PROMPT=$P$G
 
