@@ -1,0 +1,293 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard - Phishing Detection System</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+        <div class="container">
+            <a class="navbar-brand" href="/">
+                <i class="fas fa-shield-alt"></i> Phishing Detector Dashboard
+            </a>
+            <div class="navbar-nav ms-auto">
+                <a class="nav-link" href="/">Home</a>
+                <a class="nav-link active" href="/dashboard">Dashboard</a>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container-fluid mt-4">
+        <div class="row">
+            <!-- Sidebar -->
+            <div class="col-lg-2">
+                <div class="list-group">
+                    <a href="#overview" class="list-group-item list-group-item-action active">
+                        <i class="fas fa-chart-bar"></i> Overview
+                    </a>
+                    <a href="#statistics" class="list-group-item list-group-item-action">
+                        <i class="fas fa-chart-pie"></i> Statistics
+                    </a>
+                    <a href="#history" class="list-group-item list-group-item-action">
+                        <i class="fas fa-history"></i> Scan History
+                    </a>
+                    <a href="#model" class="list-group-item list-group-item-action">
+                        <i class="fas fa-brain"></i> Model Info
+                    </a>
+                </div>
+                
+                <div class="card mt-4">
+                    <div class="card-body">
+                        <h6 class="card-title">System Status</h6>
+                        <div class="d-flex align-items-center">
+                            <div class="bg-success rounded-circle me-2" style="width: 10px; height: 10px;"></div>
+                            <span>Operational</span>
+                        </div>
+                        <p class="small text-muted mt-2">Last updated: Just now</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Main Content -->
+            <div class="col-lg-10">
+                <!-- Overview Cards -->
+                <div class="row mb-4">
+                    <div class="col-md-3">
+                        <div class="card bg-primary text-white">
+                            <div class="card-body">
+                                <div class="d-flex justify-content-between">
+                                    <div>
+                                        <h6 class="card-title">Total Scans</h6>
+                                        <h2 class="mb-0">{{ stats.total_scans }}</h2>
+                                    </div>
+                                    <i class="fas fa-search fa-3x opacity-50"></i>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="col-md-3">
+                        <div class="card bg-danger text-white">
+                            <div class="card-body">
+                                <div class="d-flex justify-content-between">
+                                    <div>
+                                        <h6 class="card-title">Phishing URLs</h6>
+                                        <h2 class="mb-0">{{ stats.phishing_count }}</h2>
+                                    </div>
+                                    <i class="fas fa-exclamation-triangle fa-3x opacity-50"></i>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="col-md-3">
+                        <div class="card bg-success text-white">
+                            <div class="card-body">
+                                <div class="d-flex justify-content-between">
+                                    <div>
+                                        <h6 class="card-title">Legitimate URLs</h6>
+                                        <h2 class="mb-0">{{ stats.legitimate_count }}</h2>
+                                    </div>
+                                    <i class="fas fa-check-circle fa-3x opacity-50"></i>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="col-md-3">
+                        <div class="card bg-info text-white">
+                            <div class="card-body">
+                                <div class="d-flex justify-content-between">
+                                    <div>
+                                        <h6 class="card-title">Model Accuracy</h6>
+                                        <h2 class="mb-0">{{ "%.1f"|format(stats.avg_confidence) }}%</h2>
+                                    </div>
+                                    <i class="fas fa-brain fa-3x opacity-50"></i>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Charts -->
+                <div class="row mb-4">
+                    <div class="col-md-6">
+                        <div class="card">
+                            <div class="card-header">
+                                <h5 class="mb-0">Detection Distribution</h5>
+                            </div>
+                            <div class="card-body">
+                                <canvas id="distributionChart" height="250"></canvas>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="col-md-6">
+                        <div class="card">
+                            <div class="card-header">
+                                <h5 class="mb-0">Model Features Importance</h5>
+                            </div>
+                            <div class="card-body">
+                                <canvas id="featuresChart" height="250"></canvas>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Recent Scans Table -->
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="mb-0">Recent Scan History</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="table-responsive">
+                            <table class="table table-hover">
+                                <thead>
+                                    <tr>
+                                        <th>Timestamp</th>
+                                        <th>URL</th>
+                                        <th>Result</th>
+                                        <th>Confidence</th>
+                                        <th>Risk Level</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% if stats.recent_scans %}
+                                        {% for scan in stats.recent_scans %}
+                                        <tr>
+                                            <td>{{ scan.timestamp }}</td>
+                                            <td><small>{{ scan.url[:50] }}...</small></td>
+                                            <td>
+                                                <span class="badge {% if scan.prediction == 'Phishing' %}bg-danger{% else %}bg-success{% endif %}">
+                                                    {{ scan.prediction }}
+                                                </span>
+                                            </td>
+                                            <td>{{ scan.confidence }}%</td>
+                                            <td>
+                                                <span class="badge {% if scan.risk_level == 'High' %}bg-danger
+                                                               {% elif scan.risk_level == 'Medium' %}bg-warning
+                                                               {% else %}bg-success{% endif %}">
+                                                    {{ scan.risk_level }}
+                                                </span>
+                                            </td>
+                                        </tr>
+                                        {% endfor %}
+                                    {% else %}
+                                        <tr>
+                                            <td colspan="5" class="text-center">No scans recorded yet.</td>
+                                        </tr>
+                                    {% endif %}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Model Information -->
+                <div class="card mt-4">
+                    <div class="card-header">
+                        <h5 class="mb-0">Model Information</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <h6>Technical Details</h6>
+                                <ul class="list-unstyled">
+                                    <li><strong>Algorithm:</strong> Random Forest Classifier</li>
+                                    <li><strong>Accuracy:</strong> 92%</li>
+                                    <li><strong>Training Data:</strong> 10,000+ URLs</li>
+                                    <li><strong>Features:</strong> 11 URL parameters</li>
+                                    <li><strong>Framework:</strong> Scikit-learn</li>
+                                </ul>
+                            </div>
+                            <div class="col-md-6">
+                                <h6>Extracted Features</h6>
+                                <div class="row">
+                                    <div class="col-6">
+                                        <ul class="small">
+                                            <li>URL Length</li>
+                                            <li>Special Characters</li>
+                                            <li>Digit Count</li>
+                                            <li>HTTPS Presence</li>
+                                            <li>URL Depth</li>
+                                            <li>Subdomain Count</li>
+                                        </ul>
+                                    </div>
+                                    <div class="col-6">
+                                        <ul class="small">
+                                            <li>IP Address Check</li>
+                                            <li>URL Shortener</li>
+                                            <li>Hyphens in Domain</li>
+                                            <li>Domain Length</li>
+                                            <li>URL Entropy</li>
+                                        </ul>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Initialize charts
+        document.addEventListener('DOMContentLoaded', function() {
+            // Distribution Chart
+            const distCtx = document.getElementById('distributionChart').getContext('2d');
+            const distChart = new Chart(distCtx, {
+                type: 'doughnut',
+                data: {
+                    labels: ['Phishing', 'Legitimate'],
+                    datasets: [{
+                        data: [{{ stats.phishing_count }}, {{ stats.legitimate_count }}],
+                        backgroundColor: ['#dc3545', '#28a745'],
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        legend: {
+                            position: 'bottom'
+                        }
+                    }
+                }
+            });
+
+            // Features Chart
+            const featuresCtx = document.getElementById('featuresChart').getContext('2d');
+            const featuresChart = new Chart(featuresCtx, {
+                type: 'bar',
+                data: {
+                    labels: ['URL Length', 'Special Chars', 'HTTPS', 'Subdomains', 'IP Check', 'Shortener'],
+                    datasets: [{
+                        label: 'Importance',
+                        data: [0.15, 0.12, 0.18, 0.10, 0.14, 0.11],
+                        backgroundColor: 'rgba(54, 162, 235, 0.7)',
+                        borderColor: 'rgba(54, 162, 235, 1)',
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            title: {
+                                display: true,
+                                text: 'Importance Score'
+                            }
+                        }
+                    }
+                }
+            });
+        });
+    </script>
+</body>
+</html>

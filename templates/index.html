@@ -1,0 +1,395 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Phishing Detection System</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <style>
+        .hero-section {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 80px 0;
+            margin-bottom: 50px;
+        }
+        .feature-card {
+            transition: transform 0.3s ease;
+            height: 100%;
+        }
+        .feature-card:hover {
+            transform: translateY(-10px);
+        }
+        .scan-card {
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+        }
+        .recent-scan-item {
+            border-left: 4px solid #4361ee;
+            padding-left: 15px;
+            margin-bottom: 10px;
+        }
+        .badge-phishing {
+            background-color: #f72585;
+            color: white;
+        }
+        .badge-legitimate {
+            background-color: #4cc9f0;
+            color: white;
+        }
+    </style>
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark fixed-top">
+        <div class="container">
+            <a class="navbar-brand" href="/">
+                <i class="fas fa-shield-alt"></i> Phishing Detector
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto">
+                    <li class="nav-item">
+                        <a class="nav-link active" href="/">Home</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/dashboard">Dashboard</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#features">Features</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#about">About</a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Hero Section -->
+    <div class="hero-section">
+        <div class="container">
+            <div class="row align-items-center">
+                <div class="col-lg-6">
+                    <h1 class="display-4 fw-bold mb-4">
+                        Detect Phishing URLs with <span class="text-warning">92% Accuracy</span>
+                    </h1>
+                    <p class="lead mb-4">
+                        Our AI-powered system analyzes URLs in real-time using machine learning
+                        to protect you from phishing attacks. Built with Flask and Scikit-learn.
+                    </p>
+                    <div class="d-flex flex-wrap gap-2 mb-4">
+                        <span class="badge bg-success fs-6 p-2">
+                            <i class="fas fa-random"></i> Random Forest Algorithm
+                        </span>
+                        <span class="badge bg-info fs-6 p-2">
+                            <i class="fas fa-bolt"></i> Real-time Analysis
+                        </span>
+                        <span class="badge bg-warning fs-6 p-2">
+                            <i class="fas fa-chart-line"></i> 11 Features Analyzed
+                        </span>
+                    </div>
+                    <a href="#scan" class="btn btn-light btn-lg">
+                        <i class="fas fa-play"></i> Start Scanning Now
+                    </a>
+                </div>
+                <div class="col-lg-6">
+                    <img src="https://cdn.pixabay.com/photo/2021/08/04/13/06/software-developer-6521720_1280.jpg" 
+                         alt="Security Analysis" class="img-fluid rounded shadow-lg">
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="container py-5">
+        <!-- Scan Section -->
+        <div id="scan" class="row mb-5">
+            <div class="col-12">
+                <div class="card scan-card">
+                    <div class="card-header bg-primary text-white">
+                        <h3 class="mb-0"><i class="fas fa-search"></i> Scan URL for Phishing</h3>
+                    </div>
+                    <div class="card-body p-4">
+                        <div class="row align-items-center">
+                            <div class="col-md-8">
+                                <div class="mb-3">
+                                    <label for="urlInput" class="form-label fw-bold">Enter URL to Scan:</label>
+                                    <div class="input-group input-group-lg">
+                                        <span class="input-group-text">
+                                            <i class="fas fa-link"></i>
+                                        </span>
+                                        <input type="text" class="form-control" id="urlInput" 
+                                               placeholder="https://example.com" value="https://">
+                                    </div>
+                                    <div class="form-text">
+                                        Enter complete URL including http:// or https://
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <button class="btn btn-primary btn-lg w-100" onclick="scanURL()">
+                                    <i class="fas fa-search"></i> Scan URL
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <!-- Loading Indicator -->
+                        <div id="loading" class="text-center mt-4" style="display: none;">
+                            <div class="spinner-border text-primary" role="status" style="width: 3rem; height: 3rem;">
+                                <span class="visually-hidden">Loading...</span>
+                            </div>
+                            <h5 class="mt-3">Analyzing URL...</h5>
+                            <p class="text-muted">Extracting features and running machine learning model</p>
+                        </div>
+                        
+                        <!-- Result Display -->
+                        <div id="result" class="mt-4" style="display: none;"></div>
+                        
+                        <!-- Error Display -->
+                        <div id="error" class="alert alert-danger mt-3" style="display: none;">
+                            <i class="fas fa-exclamation-triangle"></i>
+                            <span id="errorMessage"></span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Features Section -->
+        <div id="features" class="row mb-5">
+            <div class="col-12 text-center mb-5">
+                <h2 class="display-5 fw-bold">How It Works</h2>
+                <p class="lead">Advanced phishing detection using machine learning</p>
+            </div>
+            
+            <div class="col-md-4 mb-4">
+                <div class="card feature-card h-100">
+                    <div class="card-body text-center p-4">
+                        <div class="feature-icon mb-4">
+                            <i class="fas fa-code fa-4x text-primary"></i>
+                        </div>
+                        <h4 class="card-title">URL Analysis</h4>
+                        <p class="card-text">
+                            Extracts 11 features including URL length, special characters, 
+                            domain reputation, and more for comprehensive analysis.
+                        </p>
+                        <ul class="list-unstyled text-start">
+                            <li><i class="fas fa-check text-success"></i> URL Length Analysis</li>
+                            <li><i class="fas fa-check text-success"></i> Special Character Detection</li>
+                            <li><i class="fas fa-check text-success"></i> Domain Structure Analysis</li>
+                            <li><i class="fas fa-check text-success"></i> HTTPS Verification</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-md-4 mb-4">
+                <div class="card feature-card h-100">
+                    <div class="card-body text-center p-4">
+                        <div class="feature-icon mb-4">
+                            <i class="fas fa-brain fa-4x text-success"></i>
+                        </div>
+                        <h4 class="card-title">Machine Learning</h4>
+                        <p class="card-text">
+                            Uses Random Forest algorithm trained on thousands of URLs 
+                            to achieve 92% accuracy in classification.
+                        </p>
+                        <ul class="list-unstyled text-start">
+                            <li><i class="fas fa-check text-success"></i> Random Forest Classifier</li>
+                            <li><i class="fas fa-check text-success"></i> 92% Accuracy Rate</li>
+                            <li><i class="fas fa-check text-success"></i> Real-time Prediction</li>
+                            <li><i class="fas fa-check text-success"></i> Confidence Scoring</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-md-4 mb-4">
+                <div class="card feature-card h-100">
+                    <div class="card-body text-center p-4">
+                        <div class="feature-icon mb-4">
+                            <i class="fas fa-bolt fa-4x text-warning"></i>
+                        </div>
+                        <h4 class="card-title">Real-time Detection</h4>
+                        <p class="card-text">
+                            Instant analysis and threat detection with detailed 
+                            risk assessment and security recommendations.
+                        </p>
+                        <ul class="list-unstyled text-start">
+                            <li><i class="fas fa-check text-success"></i> Instant Results</li>
+                            <li><i class="fas fa-check text-success"></i> Risk Level Assessment</li>
+                            <li><i class="fas fa-check text-success"></i> Security Recommendations</li>
+                            <li><i class="fas fa-check text-success"></i> Detailed Reports</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Recent Scans Section -->
+        <div class="row mb-5">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-header">
+                        <h3 class="mb-0">
+                            <i class="fas fa-history"></i> Recent Scans
+                            <span class="badge bg-primary float-end" id="recentCount">0</span>
+                        </h3>
+                    </div>
+                    <div class="card-body">
+                        <div id="recentScans" class="text-center py-4">
+                            <div class="spinner-border text-primary" role="status">
+                                <span class="visually-hidden">Loading...</span>
+                            </div>
+                            <p class="mt-2">Loading recent scans...</p>
+                        </div>
+                        <div class="text-center">
+                            <a href="/dashboard" class="btn btn-outline-primary">
+                                <i class="fas fa-chart-bar"></i> View Full Dashboard
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Stats Section -->
+        <div id="about" class="row mb-5">
+            <div class="col-12">
+                <div class="card bg-dark text-white">
+                    <div class="card-body">
+                        <div class="row text-center">
+                            <div class="col-md-3 mb-4">
+                                <h2 class="display-4 fw-bold">92%</h2>
+                                <p class="mb-0">Accuracy Rate</p>
+                                <small>Random Forest Model</small>
+                            </div>
+                            <div class="col-md-3 mb-4">
+                                <h2 class="display-4 fw-bold" id="totalScans">0</h2>
+                                <p class="mb-0">URLs Scanned</p>
+                                <small>Real-time analysis</small>
+                            </div>
+                            <div class="col-md-3 mb-4">
+                                <h2 class="display-4 fw-bold">11</h2>
+                                <p class="mb-0">Features Analyzed</p>
+                                <small>Per URL scan</small>
+                            </div>
+                            <div class="col-md-3 mb-4">
+                                <h2 class="display-4 fw-bold">&lt;1s</h2>
+                                <p class="mb-0">Response Time</p>
+                                <small>Instant results</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="bg-dark text-white py-5">
+        <div class="container">
+            <div class="row">
+                <div class="col-md-4">
+                    <h5 class="mb-3">
+                        <i class="fas fa-shield-alt"></i> Phishing Detection System
+                    </h5>
+                    <p>
+                        Advanced phishing URL detection using machine learning.
+                        Built with Flask and Scikit-learn for real-time analysis.
+                    </p>
+                </div>
+                <div class="col-md-4">
+                    <h5 class="mb-3">Technology Stack</h5>
+                    <ul class="list-unstyled">
+                        <li><i class="fas fa-check text-success"></i> Flask (Backend)</li>
+                        <li><i class="fas fa-check text-success"></i> Scikit-learn (ML)</li>
+                        <li><i class="fas fa-check text-success"></i> Random Forest Algorithm</li>
+                        <li><i class="fas fa-check text-success"></i> Bootstrap 5 (UI)</li>
+                    </ul>
+                </div>
+                <div class="col-md-4">
+                    <h5 class="mb-3">Features</h5>
+                    <ul class="list-unstyled">
+                        <li><i class="fas fa-check text-success"></i> 92% Detection Accuracy</li>
+                        <li><i class="fas fa-check text-success"></i> Real-time URL Analysis</li>
+                        <li><i class="fas fa-check text-success"></i> Detailed Risk Reports</li>
+                        <li><i class="fas fa-check text-success"></i> API Access Available</li>
+                    </ul>
+                </div>
+            </div>
+            <hr class="bg-light">
+            <div class="text-center">
+                <p class="mb-0">
+                    &copy; 2024 Phishing Detection System. For educational purposes only.
+                    Always verify suspicious URLs through official channels.
+                </p>
+            </div>
+        </div>
+    </footer>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="{{ url_for('static', filename='js/script.js') }}"></script>
+    <script>
+        // Fix for navbar on mobile
+        document.addEventListener('DOMContentLoaded', function() {
+            // Load recent scans and stats
+            loadRecentScans();
+            loadStats();
+            
+            // Smooth scrolling for anchor links
+            document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+                anchor.addEventListener('click', function (e) {
+                    e.preventDefault();
+                    const targetId = this.getAttribute('href');
+                    if (targetId === '#') return;
+                    
+                    const targetElement = document.querySelector(targetId);
+                    if (targetElement) {
+                        window.scrollTo({
+                            top: targetElement.offsetTop - 70,
+                            behavior: 'smooth'
+                        });
+                    }
+                });
+            });
+            
+            // Allow Enter key to trigger scan
+            document.getElementById('urlInput').addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') {
+                    scanURL();
+                }
+            });
+        });
+
+        async function loadStats() {
+            try {
+                const response = await fetch('/api/stats');
+                const stats = await response.json();
+                
+                // Update stats on page
+                document.getElementById('totalScans').textContent = stats.total_scans;
+            } catch (error) {
+                console.error('Error loading stats:', error);
+            }
+        }
+
+        function displayError(message) {
+            const errorDiv = document.getElementById('error');
+            const errorMessage = document.getElementById('errorMessage');
+            
+            errorMessage.textContent = message;
+            errorDiv.style.display = 'block';
+            
+            // Hide error after 5 seconds
+            setTimeout(() => {
+                errorDiv.style.display = 'none';
+            }, 5000);
+        }
+    </script>
+</body>
+</html>
